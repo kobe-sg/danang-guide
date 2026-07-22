@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>다낭 · Trip</title>
+<style>
+:root{
+  --bg:#F4F5F7; --card:#FFFFFF; --sep:#EDEEF1; --line:#E3E5EA;
+  --ink:#17171C; --ink2:#4A4B52; --gray:#8C8D96; --gray2:#B7B9C1;
+  --blue:#3D6AFF; --blued:#264BD6; --tint:#EBF0FF; --tint2:#F5F8FF;
+  --coral:#FF5A4D; --green:#12B886; --amber:#FF9500;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;background:var(--bg);}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Pretendard",system-ui,"Apple SD Gothic Neo",sans-serif;
+  color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.45;
+  max-width:480px;margin:0 auto;padding-bottom:calc(66px + env(safe-area-inset-bottom));}
+a{color:var(--blue);text-decoration:none;}
+.hidden{display:none!important;}
+.wrap{padding:0 16px;}
+
+/* app bar */
+.appbar{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.9);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--sep);
+  padding:calc(env(safe-area-inset-top) + 11px) 16px 11px;display:flex;align-items:baseline;gap:8px;}
+.appbar h1{font-size:19px;font-weight:800;letter-spacing:-.02em;margin:0;}
+.appbar .dt{font-size:12.5px;color:var(--gray);margin-left:auto;font-weight:500;}
+
+/* trip summary */
+.trip{display:flex;background:var(--card);border-radius:16px;margin:14px 0 4px;
+  box-shadow:0 1px 3px rgba(20,20,40,.05);overflow:hidden;}
+.trip .cell{flex:1;padding:13px 6px;text-align:center;border-left:1px solid var(--sep);}
+.trip .cell:first-child{border-left:none;}
+.trip .cell .t{font-size:11px;color:var(--gray);font-weight:600;}
+.trip .cell .v{font-size:14px;font-weight:700;margin-top:3px;letter-spacing:-.01em;}
+
+/* section head */
+.shead{font-size:20px;font-weight:800;letter-spacing:-.02em;padding:18px 4px 3px;}
+.ssub{font-size:13px;color:var(--gray);padding:0 4px 12px;}
+.ghd{font-size:13px;color:var(--ink);font-weight:700;padding:20px 6px 9px;letter-spacing:-.01em;}
+
+/* day tabs */
+.daytabs{display:flex;gap:8px;overflow-x:auto;padding:12px 2px 6px;scrollbar-width:none;}
+.daytabs::-webkit-scrollbar{display:none;}
+.dtab{flex:0 0 auto;background:var(--card);border:1px solid var(--line);border-radius:13px;
+  padding:8px 13px;text-align:center;cursor:pointer;min-width:60px;}
+.dtab .n{font-size:13px;font-weight:800;letter-spacing:-.01em;color:var(--ink);}
+.dtab .d{font-size:10.5px;color:var(--gray);margin-top:1px;font-weight:600;}
+.dtab.on{background:var(--blue);border-color:var(--blue);}
+.dtab.on .n,.dtab.on .d{color:#fff;}
+
+/* day header */
+.dayhd{display:flex;align-items:center;gap:9px;padding:14px 2px 10px;}
+.dayhd .big{font-size:18px;font-weight:800;letter-spacing:-.02em;}
+.dayhd .tag{font-size:11.5px;color:var(--blued);background:var(--tint);padding:4px 9px;border-radius:8px;font-weight:700;}
+.route-btn{margin-left:auto;display:inline-flex;align-items:center;gap:5px;background:var(--blue);
+  color:#fff;font-size:12.5px;font-weight:700;padding:8px 13px;border-radius:11px;}
+.route-btn svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;}
+
+/* map panel */
+.mappanel{position:relative;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(20,20,40,.06);
+  margin-bottom:6px;background:#EAF0F6;}
+.mappanel svg{display:block;width:100%;}
+.mapcap{position:absolute;left:10px;top:9px;background:rgba(255,255,255,.92);border-radius:8px;
+  font-size:11px;font-weight:700;color:var(--ink2);padding:4px 9px;}
+
+/* course list */
+.course{position:relative;margin-top:4px;}
+.stop{display:flex;gap:12px;position:relative;padding:3px 2px;}
+.stop .col{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:26px;}
+.stop .num{width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;
+  font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.stop .bar{flex:1;width:2px;background:var(--line);margin:3px 0;min-height:14px;}
+.stop.last .bar{display:none;}
+.stop .body{flex:1;padding-bottom:4px;}
+.pcard{background:var(--card);border-radius:14px;box-shadow:0 1px 2px rgba(20,20,40,.05);
+  padding:11px 13px;margin-bottom:4px;}
+.pcard .ptime{font-size:11.5px;color:var(--blued);font-weight:700;}
+.pcard .pname{font-size:15.5px;font-weight:700;letter-spacing:-.01em;margin:1px 0 0;display:flex;align-items:center;gap:7px;}
+.pcard .pcat{font-size:10.5px;font-weight:700;color:var(--gray);background:#F1F2F5;padding:2px 7px;border-radius:6px;}
+.pcard .pnote{font-size:13px;color:var(--ink2);margin-top:5px;line-height:1.5;}
+.pcard .pmap{display:inline-flex;align-items:center;gap:4px;margin-top:9px;color:var(--blue);font-size:12.5px;font-weight:700;}
+.pcard .pmap svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;}
+.move{display:flex;align-items:center;gap:6px;color:var(--gray);font-size:11.5px;font-weight:600;
+  padding:2px 0 6px;}
+.move svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;}
+
+/* meal/cost + tip */
+.daymeta{display:flex;gap:8px;flex-wrap:wrap;margin:10px 2px 4px;}
+.mchip{font-size:12px;font-weight:700;padding:7px 12px;border-radius:11px;}
+.mchip.meal{background:var(--tint);color:var(--blued);}
+.mchip.cost{background:#FFF1EF;color:#D53E32;}
+.daytip{display:flex;gap:8px;font-size:12.5px;color:var(--ink2);background:var(--tint2);
+  border:1px solid var(--tint);border-radius:13px;padding:11px 13px;margin:8px 2px 0;line-height:1.5;}
+.daytip b{color:var(--blued);}
+
+/* filter chips */
+.filters{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 14px;scrollbar-width:none;}
+.filters::-webkit-scrollbar{display:none;}
+.fchip{flex:0 0 auto;background:var(--card);border:1px solid var(--line);border-radius:999px;
+  padding:8px 15px;font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer;}
+.fchip.on{background:var(--ink);border-color:var(--ink);color:#fff;}
+
+/* place/food big cards */
+.bcard{background:var(--card);border-radius:16px;box-shadow:0 1px 3px rgba(20,20,40,.05);
+  padding:15px 16px;margin-bottom:12px;overflow:hidden;}
+.thumb{position:relative;height:134px;margin:-15px -16px 12px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;}
+.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+.thumb .tban{position:relative;z-index:0;display:flex;flex-direction:column;align-items:center;gap:6px;color:#fff;}
+.thumb .ticon svg{width:30px;height:30px;opacity:.96;}
+.thumb .tname{font-weight:800;font-size:15px;letter-spacing:-.01em;text-align:center;padding:0 14px;opacity:.97;}
+.bcard .top{display:flex;align-items:center;gap:8px;}
+.bcard h3{font-size:16.5px;font-weight:800;letter-spacing:-.01em;margin:0;}
+.bcard .en{font-size:11.5px;color:var(--gray2);font-weight:600;}
+.bcard .rtag{margin-left:auto;font-size:11px;font-weight:700;color:var(--blued);background:var(--tint);padding:4px 9px;border-radius:8px;}
+.bcard .desc{font-size:13.5px;color:var(--ink2);margin:9px 0 0;line-height:1.55;}
+.bcard .meta{font-size:12.5px;color:var(--gray);margin-top:8px;line-height:1.5;}
+.bcard .meta b{color:var(--ink2);font-weight:700;}
+.foodrow{font-size:13px;color:var(--ink2);margin-top:6px;}
+.foodrow .lb{color:var(--blued);font-weight:700;font-size:11.5px;margin-right:3px;}
+.mapbtn{display:inline-flex;align-items:center;gap:5px;margin-top:11px;background:var(--tint);
+  color:var(--blue);font-size:13px;font-weight:700;padding:9px 14px;border-radius:11px;}
+.mapbtn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;}
+.mapbtn.naver{background:#E7F7EE;color:#08A552;}
+.mapbtn.naver svg{fill:currentColor;stroke:none;}
+.review{font-size:13px;color:var(--ink2);margin-top:8px;line-height:1.55;background:#F6F8FF;border-radius:11px;padding:9px 12px;}
+.review .lb{color:var(--blued);font-weight:700;font-size:11.5px;margin-right:4px;}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* info list */
+.list{background:var(--card);border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(20,20,40,.05);}
+.row{display:flex;gap:12px;padding:12px 15px;border-top:1px solid var(--sep);}
+.row:first-child{border-top:none;}
+.row .k{font-size:14px;color:var(--gray);min-width:76px;font-weight:600;flex-shrink:0;}
+.row .v{font-size:14px;color:var(--ink);flex:1;}
+.row .v b{font-weight:700;}
+.hlbox{background:var(--tint2);border:1px solid var(--tint);border-radius:13px;padding:12px 14px;margin-top:12px;
+  font-size:13px;color:var(--ink2);line-height:1.55;}
+.hlbox b{color:var(--blued);}
+.check{display:flex;align-items:center;gap:11px;padding:12px 15px;border-top:1px solid var(--sep);font-size:14px;cursor:pointer;}
+.check:first-child{border-top:none;}
+.box{width:21px;height:21px;border-radius:7px;border:1.8px solid var(--gray2);flex-shrink:0;}
+.note{font-size:12px;color:var(--gray);padding:10px 6px 0;line-height:1.5;}
+
+/* tab bar */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:480px;margin:0 auto;
+  background:rgba(255,255,255,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--sep);display:flex;padding-bottom:env(safe-area-inset-bottom);}
+.tab{flex:1;background:none;border:none;padding:9px 0 7px;display:flex;flex-direction:column;
+  align-items:center;gap:3px;color:var(--gray2);font-family:inherit;cursor:pointer;}
+.tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.9;}
+.tab span{font-size:10.5px;font-weight:700;letter-spacing:-.01em;}
+.tab.on{color:var(--blue);}
+.section{animation:fade .22s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(3px);}to{opacity:1;transform:none;}}
+/* leaflet map */
+#daymap{height:190px;width:100%;border-radius:16px;z-index:1;background:#E8EEF4;}
+.mkpin{background:var(--blue);color:#fff;border:2px solid #fff;border-radius:50%;
+  width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+.leaflet-container{font-family:inherit;}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+</head>
+<body>
+
+<div class="appbar"><h1>다낭 여행</h1><div class="dt">7.25 – 7.31 · 5박</div></div>
+
+<!-- ===== 일정 ===== -->
+<div id="tab-plan" class="section">
+  <div class="wrap">
+    <div class="trip">
+      <div class="cell"><div class="t">일정</div><div class="v">5박 7일</div></div>
+      <div class="cell"><div class="t">인원</div><div class="v">4명</div></div>
+      <div class="cell"><div class="t">숙소</div><div class="v">풀먼</div></div>
+    </div>
+
+    <div class="ghd">항공편</div>
+    <div class="list">
+      <div class="row"><div class="k">가는 편</div><div class="v"><b>7/25</b> 인천 18:50 → 다낭 21:35 · OZ755 · 예약 FLWCLT</div></div>
+      <div class="row"><div class="k">오는 편</div><div class="v"><b>7/30</b> 다낭 23:10 → 인천 06:05 · OZ756</div></div>
+    </div>
+
+    <div class="ghd">일정 코스</div>
+    <div class="daytabs" id="daytabs"></div>
+    <div id="dayview"></div>
+  </div>
+</div>
+
+<!-- ===== 명소 ===== -->
+<div id="tab-spot" class="section hidden">
+  <div class="wrap">
+    <div class="shead">가볼 만한 곳</div>
+    <div class="ssub">‘지도 열기’를 누르면 구글맵이 열려요. 위치 확인 후 그랩 목적지로 그대로. <b>카드 사진은 대표 이미지</b>이며 실제·최신 사진은 ‘지도’에서 확인하세요.</div>
+    <div class="filters" id="spotfilters"></div>
+    <div id="spots"></div>
+  </div>
+</div>
+
+<!-- ===== 맛집 ===== -->
+<div id="tab-food" class="section hidden">
+  <div class="wrap">
+    <div class="shead">맛집 · 카페</div>
+    <div class="ssub">일정에 없는 대안까지 담았어요. 각 카드의 <b>한국인 후기 요약</b>과 <b>‘네이버 후기’</b>(블로그 검색)·‘지도’ 버튼을 참고하세요. <b>카드 사진은 음식 대표 이미지</b>이며, 그 가게의 실제 사진은 ‘지도’·‘네이버 후기’에서 보세요. 100,000동 ≈ 약 5,300원.</div>
+
+    <div class="bcard" style="background:#F4FBF7">
+      <div style="font-size:15px;font-weight:800;color:#08A552;margin-bottom:7px;letter-spacing:-.01em">배달로 먹기 · GrabFood / ShopeeFood</div>
+      <div style="font-size:13px;color:var(--ink2);line-height:1.7">
+        쉬는 날엔 리조트에서 배달도 편해요.<br>
+        · <b>앱</b>: 그랩 앱의 <b>GrabFood</b>가 제일 쉬움(이미 그랩 쓰면 바로). ShopeeFood도 가능<br>
+        · <b>픽업</b>: 배달 메모에 <b>‘Main Lobby’</b> 또는 ‘Gate 1’을 영문으로 적기<br>
+        · <b>밤 배차</b>: 팁을 조금 얹으면 늦은 밤에도 배차가 빠른 편<br>
+        · <b>검색</b>: 메뉴를 영문으로 치면 가까운 순으로 정렬돼요<br>
+        · 베트남 번호가 없으면 <b>프런트에 대신 주문</b> 부탁 가능<br>
+        · 배달에 잘 맞는 메뉴: 쌀국수·반미·껌가·피자·치킨·카페. <b>씨푸드·반쎄오는 매장</b>이 더 좋아요
+      </div>
+    </div>
+
+    <div class="filters" id="foodfilters"></div>
+    <div id="foods"></div>
+    <div class="hlbox"><b>주문 팁</b> 해산물은 수족관에서 직접 고르고 무게로 계산하는 곳이 많아요. 주문 전 <b>kg당 가격과 총 예상액</b>을 꼭 확인하세요. 생수는 병입으로.</div>
+  </div>
+</div>
+
+<!-- ===== 정보 ===== -->
+<div id="tab-info" class="section hidden">
+  <div class="wrap">
+    <div class="shead">여행 정보</div>
+    <div class="ssub">예산 · 날씨 · 환전 · 카드 · 교통 · 회화 · 비상 · 준비물</div>
+
+    <div class="ghd">5박 예상 경비 · 4인 (항공·숙박 제외)</div>
+    <div class="list" id="budget"></div>
+    <div class="note">씨푸드·쇼핑 규모가 총액을 좌우해요. 한국 여행객 4인 가족 후기 기준의 넉넉한 추정치입니다.</div>
+
+    <div class="ghd">7월 날씨</div>
+    <div class="list">
+      <div class="row"><div class="k">기온</div><div class="v">건기(2~8월). 낮 최고 33~35℃, 햇볕 강함. 밤엔 선선</div></div>
+      <div class="row"><div class="k">비</div><div class="v">가끔 오후 소나기(스콜). 접이식 우산·우비</div></div>
+      <div class="row"><div class="k">대비</div><div class="v">선크림·모자·선글라스·시원한 옷, 냉방 대비 얇은 겉옷</div></div>
+    </div>
+
+    <div class="ghd">환전 — 어디서, 어떻게</div>
+    <div class="list">
+      <div class="row"><div class="k">뭘 가져가나</div><div class="v"><b>5만원권 그대로 OK.</b> 다낭은 한국인이 많아 원화도 환율을 잘 쳐줘요. 달러가 미세하게 유리하지만 한국서 달러 사는 비용까지 보면 차이 크지 않음</div></div>
+      <div class="row"><div class="k">신권</div><div class="v">접히거나 낙서·훼손된 지폐는 거부될 수 있어요. <b>깨끗한 5만원권</b>으로 준비</div></div>
+      <div class="row"><div class="k">어디서</div><div class="v"><b>한 시장 인근 환전소·금은방</b>이 환율 최고. 공항·마트·몰은 불리</div></div>
+      <div class="row"><div class="k">얼마나</div><div class="v"><b>카드 70~80% + 현금 20~30%</b>. 4인 5박이면 현금 <b>50~70만원어치(약 900만~1,250만동)</b>. 처음엔 30~40만원만 바꾸고 부족하면 추가</div></div>
+      <div class="row"><div class="k">현금 쓸 곳</div><div class="v">로컬 식당·한 시장·길거리·팁·소액 입장료·등불배. 리조트·마트·큰 식당·그랩은 카드</div></div>
+      <div class="row"><div class="k">규정</div><div class="v">무허가 환전 단속이 강화됐어요. <b>허가된 환전소·은행</b> 이용 권장</div></div>
+    </div>
+    <div class="hlbox"><b>도착일 (밤 11시경)</b> 셔틀은 선결제라 큰 현금이 필요 없어요. <b>공항 ATM에서 트래블월렛으로 100~200만동(약 6~11만원)만</b> 뽑아 야식·물·팁용으로 쓰고, <b>공항 환전소는 환율이 나쁘니 패스</b>. 본 환전은 다음 날 한 시장에서.</div>
+
+    <div class="ghd">환전 장소 — 공항 · 한 시장</div>
+    <div class="list">
+      <div class="row"><div class="k">공항 ATM</div><div class="v">도착 후 <b>정문으로 나와 오른쪽</b>에 ATM이 모여 있어요. <b>SeABank · BIDV · HSBC</b> 등. 기기별 수수료(약 2~5만동) 발생</div></div>
+      <div class="row"><div class="k">공항 환전소</div><div class="v">수하물 찾고 나오면 <b>왼편에 환전 부스 5~6곳</b>. 원화도 되지만 <b>환율이 불리</b>하니 소액만</div></div>
+      <div class="row"><div class="k">한 시장</div><div class="v"><b>한시장 사거리에 노란 간판 금은방</b>들이 밀집해 있어요. 5만원권 기준 <b>약 94만동 안팎</b>(시세 변동). <b>2~3곳 비교</b> 후 환전 추천</div></div>
+      <div class="row"><div class="k">추천 환전소</div><div class="v"><b>손하 환전소</b> — 한국어 소통이 원활해 초보자에게 인기, 5만원권 환율 좋음<br><b>킴옌 금은방</b> — 큰 금액 환전에 신뢰도 높고 추가 수수료 거의 없음</div></div>
+      <div class="row"><div class="k">은행</div><div class="v"><b>Vietcombank · BIDV · ACB</b> — 정식 외환 면허라 가장 안전. 환율은 금은방과 비슷하거나 약간 낮음. <b>오후 5시까지 · 점심시간 휴무</b></div></div>
+      <div class="row"><div class="k">꼭 확인</div><div class="v">환전 직후 <b>그 자리에서 받은 금액을 세어 확인</b>하세요</div></div>
+    </div>
+    <div class="btnrow" style="margin-top:10px">
+      <a class="mapbtn" href="https://www.google.com/maps/search/?api=1&amp;query=Han+Market+Da+Nang" target="_blank"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.3-7-11a7 7 0 0114 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>한 시장 지도</a>
+      <a class="mapbtn" href="https://www.google.com/maps/search/?api=1&amp;query=Vietcombank+Da+Nang" target="_blank"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.3-7-11a7 7 0 0114 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Vietcombank 지도</a>
+    </div>
+    <div class="hlbox"><b>2026년 바뀐 규정</b> 2026년 2월 9일부터 시행령(340/2025/ND-CP)으로 <b>무허가 환전 단속</b>이 시작됐어요. 일부 금은방은 환전을 중단하기도 했으니, <b>허가된 환전소나 은행</b>을 이용하는 게 안전합니다.</div>
+
+    <div class="ghd">카드 — 무엇이 좋은가</div>
+    <div class="list" id="cards"></div>
+    <div class="note">요약: <b>트래블월렛으로 결제·ATM 출금 + 토스뱅크는 예비 + 현금은 5만원권으로 한 시장 환전</b>. 그랩은 카드 자동결제로 등록해두면 제일 편해요.</div>
+
+    <div class="ghd">교통 · 통신</div>
+    <div class="list">
+      <div class="row"><div class="k">그랩</div><div class="v">택시 기본. 앱 요금 확정. 4인은 그랩카·7인승. 기본요금 1천원대</div></div>
+      <div class="row"><div class="k">전용차량</div><div class="v">바나힐·호이안 왕복엔 기사포함 대절(4인승 종일 약 5~6만원)이 편·경제적</div></div>
+      <div class="row"><div class="k">공항</div><div class="v">풀먼~공항 약 15분(그랩 약 1만원). 밤 도착·출국은 사전 픽업도 좋음</div></div>
+      <div class="row"><div class="k">유심/이심</div><div class="v">공항 또는 사전 eSIM. 4인 각자 개통 권장</div></div>
+    </div>
+
+    <div class="ghd">기본 회화</div>
+    <div class="list">
+      <div class="row"><div class="k">안녕하세요</div><div class="v">씬 짜오 · Xin chào</div></div>
+      <div class="row"><div class="k">감사합니다</div><div class="v">깜 언 · Cảm ơn</div></div>
+      <div class="row"><div class="k">계산이요</div><div class="v">띤 띠엔 · Tính tiền</div></div>
+      <div class="row"><div class="k">얼마예요?</div><div class="v">바오 니에우 · Bao nhiêu</div></div>
+    </div>
+
+    <div class="ghd">비상 연락처</div>
+    <div class="list">
+      <div class="row"><div class="k">현지 긴급</div><div class="v">경찰 113 · 구급 115 · 소방 114</div></div>
+      <div class="row"><div class="k">총영사관</div><div class="v">주다낭 대한민국 총영사관 · 대표 +84-23-6356-6100</div></div>
+      <div class="row"><div class="k">긴급(야간)</div><div class="v">근무시간 외 +84-93-112-0404</div></div>
+      <div class="row"><div class="k">영사콜센터</div><div class="v">24시간 +82-2-3210-0404 (사건사고·통역)</div></div>
+    </div>
+    <div class="note">번호는 외교부 주다낭 총영사관 홈페이지 기준(2026.7 확인). 출발 전 한 번 더 확인하세요.</div>
+
+    <div class="ghd">준비물 체크리스트</div>
+    <div class="list" id="checklist"></div>
+    <div class="note" style="padding-bottom:8px">가격·환율·운영정보는 조사 시점 기준이라 방문·예약 전 한 번 더 확인하면 안전해요. 즐거운 여행 되세요.</div>
+  </div>
+</div>
+
+<nav class="tabbar">
+  <button class="tab on" data-tab="plan"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="17" rx="3"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg><span>일정</span></button>
+  <button class="tab" data-tab="spot"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.3-7-11a7 7 0 0114 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.6"/></svg><span>명소</span></button>
+  <button class="tab" data-tab="food"><svg viewBox="0 0 24 24"><path d="M6 3v8a2 2 0 004 0V3M8 11v10M18 3c-1.6 0-3 2-3 5s1 4 3 4v9"/></svg><span>맛집</span></button>
+  <button class="tab" data-tab="info"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.5"/></svg><span>정보</span></button>
+</nav>
+
+<script>
+const enc=encodeURIComponent;
+const MAP=q=>"https://www.google.com/maps/search/?api=1&query="+enc(q);
+const NAVER=q=>"https://search.naver.com/search.naver?ssc=tab.blog.all&query="+enc("다낭 "+q);
+const DIR=qs=>{const o=enc(qs[0]),d=enc(qs[qs.length-1]),w=qs.slice(1,-1).map(enc).join('|');
+  return "https://www.google.com/maps/dir/?api=1&origin="+o+"&destination="+d+(w?"&waypoints="+w:"")+"&travelmode=driving";};
+const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+const lockOf=s=>[...s].reduce((a,c)=>a+c.charCodeAt(0),0)%997;
+const IMG=(tags,lock)=>"https://loremflickr.com/440/260/"+tags+"?lock="+lock;
+const PIN='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 21s-7-6.3-7-11a7 7 0 0114 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';
+const FORK='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M6 3v8a2 2 0 004 0V3M8 11v10M18 3c-1.6 0-3 2-3 5s1 4 3 4v9"/></svg>';
+const thumb=(name,tags,lock,grad,icon)=>`<div class="thumb" style="background:${grad}"><div class="tban"><span class="ticon">${icon}</span><span class="tname">${name}</span></div><img src="${IMG(tags,lock)}" loading="lazy" alt="" onerror="this.remove()"></div>`;
+function spotKw(n){if(n.includes('바나힐'))return'goldenbridge,vietnam';if(n.includes('호이안'))return'hoian,lantern';if(n.includes('미케'))return'beach,danang';if(n.includes('오행산'))return'marble,mountain,vietnam';if(n.includes('린응'))return'buddha,statue,vietnam';if(n.includes('아시아파크'))return'ferriswheel,night';if(n.includes('한 시장'))return'market,vietnam';return'danang,vietnam';}
+function foodKw(kr,cat){if(cat==='카페')return'coffee,vietnam';if(cat==='씨푸드')return'seafood,grilled';if(cat==='양식')return'pizza';if(cat==='한식')return'korean,bbq';if(cat==='디저트')return'icecream,dessert';if(kr.includes('냐벱')||kr.includes('벱꾸온')||kr.includes('반쎄오'))return'pancake,vietnam';if(kr.includes('분짜까'))return'noodle,soup';if(kr.includes('미꽝'))return'noodle,vietnam';if(kr.includes('반미'))return'banhmi,sandwich';if(kr.includes('껌가'))return'chicken,rice';if(kr.includes('퍼')||kr.includes('포'))return'pho,noodle';if(kr.includes('미스'))return'noodle,vietnam';return'food,vietnam';}
+const SPOTGRAD='linear-gradient(135deg,#2BB3C0,#2F6BE0)';
+const foodGrad={'로컬':'linear-gradient(135deg,#FF8A3D,#FF5A4D)','씨푸드':'linear-gradient(135deg,#3D8BFF,#2F5BE0)','카페':'linear-gradient(135deg,#B07A4B,#8A5A34)','양식':'linear-gradient(135deg,#FF6B5A,#E03B4D)','디저트':'linear-gradient(135deg,#FF7EB6,#F0568E)','한식':'linear-gradient(135deg,#2FB86B,#159A54)'};
+
+const days=[
+ {no:"DAY 1",dt:"7/25 토",ti:"도착 · 체크인",meal:"기내식 · 야식 가볍게",cost:"약 3만원",
+  tip:"밤 도착이라 공항 픽업차량 사전 예약이 편해요. 그랩카도 공항→풀먼 약 4~6천원.",
+  stops:[
+   {t:"21:35",n:"다낭 국제공항",c:"도착",note:"입국 심사·수하물. 성수기엔 다소 붐빔",q:"Da Nang International Airport",ll:[16.0439,108.1994],move:"차 15분"},
+   {t:"~23:00",n:"풀먼 다낭 비치 리조트",c:"체크인",note:"짐 풀기·그랩/배달앱 세팅. 야식은 객실 배달로",q:"Pullman Danang Beach Resort",ll:[16.0338,108.2499]},
+  ]},
+ {no:"DAY 2",dt:"7/26 일",ti:"풀먼 · 목식당 · 마사지",meal:"목식당(늦은 점심 15:30, 씨푸드) · 저녁 가볍게",cost:"약 28~40만원",
+  tip:"목식당을 <b>오후 3:30 늦은 점심으로 예약</b>했으니, 오전은 늦잠·리조트 수영장으로 느긋 → 3:30 든든히 씨푸드 → 오후 산책·쇼핑 → 저녁 전신 마사지로 마무리하는 흐름이에요. 오후 스콜 대비 우산.",
+  stops:[
+   {t:"늦은 오전",n:"풀먼 수영장·비치",c:"휴양",note:"호텔 조식(늦게라도) 후 수영장·프라이빗 비치에서 여유. 선베드·구명조끼 무료",q:"Pullman Danang Beach Resort",ll:[16.0338,108.2499],move:"차 8~10분"},
+   {t:"15:30",n:"목식당 (늦은 점심·예약)",c:"맛집",note:"예약 시간 맞춰 방문 — 오늘의 메인 식사. 칠리크랩·갈릭버터 타이거새우, 한국어 메뉴, 직원이 새우 껍질도 까줌",q:"Moc Seafood Restaurant Da Nang",ll:[16.0596,108.2436],move:"차 10분"},
+   {t:"오후",n:"한 시장 · 미케비치",c:"쇼핑",note:"한 시장 기념품·환전, 해질녘 미케비치 산책. 롯데마트 들러도 좋음",q:"Han Market Da Nang",ll:[16.0685,108.2245],move:"차 12분"},
+   {t:"저녁",n:"전신 마사지 (퀸 스파)",c:"스파",note:"용 다리 인근 퀸 스파 — 한국어 소통·예약제, 뱀부 마사지 유명. 90분 약 40~55만동/인. 참 스파도 대안. 마사지 후 콩카페·반미로 가볍게",q:"Queen Spa Da Nang",ll:[16.0607,108.2275]},
+  ]},
+ {no:"DAY 3",dt:"7/27 월",ti:"망고·초콜릿 쇼핑",meal:"콩카페 · 시내 로컬",cost:"약 10~18만원 + 쇼핑",
+  tip:"오전 오행산은 <b>선택</b>이에요(풀먼서 10~15분, 엘리베이터로 편함 — 빼면 늦잠·수영장으로). 오후는 망고·초콜릿·기념품 쇼핑 위주로 느긋하게, 저녁은 리조트에서 여유.",
+  stops:[
+   {t:"오전(선택)",n:"오행산 (마블 마운틴)",c:"자연",note:"동굴·사원·전망대, 엘리베이터 이용 가능. 원하면 생략 가능",q:"Marble Mountains Da Nang",ll:[16.0036,108.2630],move:"차 15분"},
+   {t:"점심",n:"콩카페 / 시내 로컬",c:"카페",note:"코코넛커피·가벼운 로컬로 요기",q:"Cong Caphe Da Nang My Khe",ll:[16.0616,108.2470],move:"차 10분"},
+   {t:"오후",n:"페바 초콜릿",c:"쇼핑",note:"베트남 아티장 초콜릿(선물용). 쩐푸 거리, 다양한 맛·예쁜 포장으로 선물에 인기",q:"Pheva Chocolate Da Nang",ll:[16.0668,108.2237],move:"도보 8분"},
+   {t:"오후",n:"다낭 수비니어 & 마트",c:"쇼핑",note:"다낭 수비니어 카페(말린 망고·커피·기념품) + 롯데마트/윈마트에서 말린 망고·망고초콜릿·간식",q:"Danang Souvenirs Cafe Bach Dang Da Nang",ll:[16.0700,108.2247]},
+  ]},
+ {no:"DAY 4",dt:"7/28 화",ti:"바나힐 종일",meal:"바나힐 점심 · 마담란",cost:"약 28~35만원",
+  tip:"아침 일찍 올라가야 덜 붐벼요. 편한 신발 필수. 입장권 온라인 사전구매. 따님 키 1.4m↑면 성인 요금.",
+  stops:[
+   {t:"08:30",n:"풀먼 출발",c:"이동",note:"기사포함 전용차량 추천(4인승 종일 약 5~6만원)",q:"Pullman Danang Beach Resort",ll:[16.0338,108.2499],move:"차 45분"},
+   {t:"오전~오후",n:"바나힐 & 골든브릿지",c:"관광",note:"케이블카→신의 손→프랑스 마을→판타지 파크. 서늘하니 겉옷",q:"Sun World Ba Na Hills Da Nang",ll:[15.9958,107.9967],move:"차 40분"},
+   {t:"저녁",n:"마담란",c:"맛집",note:"쌀국수·분짜·모닝글로리. 전통가옥형, 쉐어하기 좋음",q:"Madame Lan Restaurant Da Nang",ll:[16.0782,108.2246]},
+  ]},
+ {no:"DAY 5",dt:"7/29 수",ti:"호이안 야시장 · 등불",meal:"호이안 로컬 · 카페",cost:"약 12~18만원",
+  tip:"낮엔 덥고 저녁 등불이 백미. 오후 출발해 해질녘~밤을 노리세요. 등불배 1척 2~5만동, 흥정 가능. 돌바닥이 많아 편한 신발.",
+  stops:[
+   {t:"오후",n:"풀먼 출발",c:"이동",note:"더위 피해 오후 출발",q:"Pullman Danang Beach Resort",ll:[16.0338,108.2499],move:"차 40분"},
+   {t:"늦오후",n:"호이안 고대도시",c:"관광",note:"노란 골목·투본강 산책·한국인 사진관. 통합권 12만동. 미스 리·반미 프엉 근처",q:"Hoi An Ancient Town",ll:[15.8794,108.3270],move:"도보 5분"},
+   {t:"야간",n:"호이안 야시장 · 등불",c:"야경",note:"등불 거리 야경, 투본강 소원 등불 배 (아이 최애 코스)",q:"Hoi An Night Market",ll:[15.8767,108.3283]},
+  ]},
+ {no:"DAY 6",dt:"7/30 목",ti:"쇼핑 · 마사지 · 출국",meal:"마지막 만찬 — 씨푸드/한식",cost:"약 25만원+쇼핑",
+  tip:"아시아나라 수하물 여유. 마트 쇼핑은 이날 몰아서. 밤 비행기라 롯데마트 근처 마사지로 여독 풀고 여유롭게 → 저녁 → 공항. 남은 동은 미리 소진.",
+  stops:[
+   {t:"~12:00",n:"풀먼 체크아웃",c:"숙소",note:"프런트에 짐 보관(러기지 스토리지). 수영장은 체크아웃 후에도 문의 가능",q:"Pullman Danang Beach Resort",ll:[16.0338,108.2499],move:"차 15분"},
+   {t:"오후",n:"롯데마트 다낭",c:"쇼핑",note:"망고·커피·라면·과자 선물 쇼핑",q:"Lotte Mart Da Nang",ll:[16.0353,108.2267],move:"도보·차 5분"},
+   {t:"오후",n:"빌라 드 스파 (롯데마트 옆)",c:"스파",note:"롯데마트 도보 2분. 한국인 인기, 무료 픽업·샌딩. 전신 60~90분(2시간 코스도 추천). 밤 비행기 전 여독 풀기 딱. 예약 권장",q:"Villa De Spa Da Nang Lotte Mart",ll:[16.0360,108.2280],move:"차 15분"},
+   {t:"저녁",n:"마지막 만찬",c:"맛집",note:"씨푸드 또는 한식, 남은 동(VND) 최대한 소진",q:"Korean restaurant My Khe Da Nang",ll:[16.0520,108.2440],move:"차 15분"},
+   {t:"23:10",n:"다낭 국제공항",c:"출국",note:"OZ756 다낭 23:10 → 익일 06:05 인천",q:"Da Nang International Airport",ll:[16.0439,108.1994]},
+  ]},
+];
+
+let _map=null;
+function initMap(stops){
+  if(_map){_map.remove();_map=null;}
+  if(typeof L==='undefined'){document.getElementById('daymap').innerHTML=
+    '<div style="padding:24px;text-align:center;color:#8C8D96;font-size:13px">지도를 불러오려면 인터넷 연결이 필요해요. ‘지도로 코스’ 버튼으로 구글맵에서 확인하세요.</div>';return;}
+  const pts=stops.map(s=>s.ll);
+  _map=L.map('daymap',{zoomControl:false,attributionControl:false,scrollWheelZoom:false});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(_map);
+  L.control.attribution({prefix:false,position:'bottomright'}).addAttribution('© OpenStreetMap').addTo(_map);
+  L.polyline(pts,{color:'#3D6AFF',weight:3,opacity:.85,dashArray:'2 8'}).addTo(_map);
+  stops.forEach((s,k)=>{
+    L.marker(s.ll,{icon:L.divIcon({className:'',html:`<div class="mkpin">${k+1}</div>`,iconSize:[24,24],iconAnchor:[12,12]})})
+     .addTo(_map).bindPopup(`<b>${k+1}. ${s.n}</b>`);
+  });
+  _map.fitBounds(L.latLngBounds(pts),{padding:[34,34],maxZoom:14});
+  setTimeout(()=>_map&&_map.invalidateSize(),120);
+}
+
+function renderDay(i){
+  const d=days[i];
+  const dir=DIR(d.stops.map(s=>s.q));
+  let course='';
+  d.stops.forEach((s,k)=>{
+    const last=k===d.stops.length-1;
+    course+=`<div class="stop ${last?'last':''}">
+      <div class="col"><div class="num">${k+1}</div><div class="bar"></div></div>
+      <div class="body">
+        <div class="pcard">
+          <div class="ptime">${s.t}</div>
+          <div class="pname">${s.n}<span class="pcat">${s.c}</span></div>
+          <div class="pnote">${s.note}</div>
+          <a class="pmap" href="${MAP(s.q)}" target="_blank"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.3-7-11a7 7 0 0114 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>지도</a>
+        </div>
+        ${last?'':`<div class="move"><svg viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg>이동 · ${s.move}</div>`}
+      </div>
+    </div>`;
+  });
+  document.getElementById('dayview').innerHTML=`
+    <div class="dayhd"><span class="big">${d.ti}</span><span class="tag">${d.no}</span>
+      <a class="route-btn" href="${dir}" target="_blank"><svg viewBox="0 0 24 24"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3z"/><path d="M9 7v13M15 4v13"/></svg>지도로 코스</a></div>
+    <div class="mappanel"><div class="mapcap">오늘의 코스 · ${d.stops.length}곳</div><div id="daymap"></div></div>
+    <div class="note" style="padding:6px 4px 0">지도 핀은 순서 안내용이에요. 정확한 위치는 각 장소의 ‘지도’ 또는 상단 ‘지도로 코스’(구글맵)에서 확인하세요.</div>
+    <div class="course">${course}</div>
+    <div class="daymeta"><span class="mchip meal">식사 · ${d.meal}</span><span class="mchip cost">비용 · ${d.cost}</span></div>
+    <div class="daytip"><b>TIP</b><span>${d.tip}</span></div>`;
+  initMap(d.stops);
+}
+
+document.getElementById('daytabs').innerHTML=days.map((d,i)=>
+  `<div class="dtab ${i===0?'on':''}" data-i="${i}"><div class="n">DAY ${i+1}</div><div class="d">${d.dt.split(' ')[0]}</div></div>`).join('');
+document.querySelectorAll('.dtab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.dtab').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');renderDay(+t.dataset.i);
+}));
+renderDay(0);
+
+const budget=[["현지 교통","약 15~20만원"],["관광 입장권","약 18~23만원"],["식사(5일)","약 60~90만원"],["마사지","약 16~24만원"],["쇼핑·예비비","약 20~40만원"],["합계","약 130~200만원 · 1인 33~50만원"]];
+document.getElementById('budget').innerHTML=budget.map((b,i)=>{const last=i===budget.length-1;
+  return `<div class="row" style="${last?'background:#F5F8FF':''}"><div class="k" style="min-width:96px">${b[0]}</div><div class="v"${last?' style="font-weight:700"':''}>${b[1]}</div></div>`;}).join('');
+
+const spots=[
+ ["바나힐 & 골든브릿지","Ba Na Hills","관광","반나절~종일","세계 최장급 케이블카로 오르는 산 위 프랑스풍 테마파크. ‘신의 손’ 골든 브릿지가 대표 포토존.","입장(케이블카) 성인 약 90만동 · 풀먼 45분 · 오전 추천","Sun World Ba Na Hills Da Nang"],
+ ["호이안 고대도시","Hoi An","관광","저녁~야간","유네스코 세계문화유산. 노란 골목과 등불 야경이 백미. 소원 등불 배·야시장.","통합권 12만동 · 풀먼 30~40분 · 해질녘 추천","Hoi An Ancient Town"],
+ ["미케 비치","My Khe","자연","상시","‘세계 6대 해변’ 20km 백사장. 풀먼 바로 앞. 아침·해질녘 산책이 특히 좋음.","무료(선베드 4~5만동) · 풀먼 바로 앞","My Khe Beach Da Nang"],
+ ["오행산 (마블 마운틴)","Marble Mtn","자연","1~2시간","석회암 다섯 봉우리와 동굴 사원, 전망대. 엘리베이터로 편하게 오를 수 있음.","입장 4만동+엘베 1.5만동 · 풀먼 10분","Marble Mountains Da Nang"],
+ ["린응사 (레이디 부다)","Linh Ung","관광","1시간","손짜 반도의 대형 해수관음상(약 67m). 시내·바다 조망. 조용하고 무료.","무료 · 풀먼 20~25분 · 단정한 복장","Linh Ung Pagoda Son Tra Da Nang"],
+ ["아시아파크 & 선휠","Asia Park","야경","야간 2~3시간","대관람차 선휠과 놀이기구가 있는 도심 야간 명소. 야경·조명이 화려함.","자유이용권 약 20만동 · 풀먼 15분","Sun World Asia Park Da Nang"],
+ ["한 시장","Han Market","시장","오전~저녁","다낭 대표 재래시장. 말린 과일·커피·기념품. 흥정 필수.","무료 입장 · 풀먼 10~15분 · 소매치기 주의","Han Market Da Nang"],
+];
+const spotCats=["전체","관광","자연","야경","시장"];
+document.getElementById('spotfilters').innerHTML=spotCats.map((c,i)=>`<div class="fchip ${i===0?'on':''}" data-f="${c}" data-grp="spot">${c}</div>`).join('');
+function renderSpots(f){document.getElementById('spots').innerHTML=spots.filter(s=>f==="전체"||s[2]===f).map(s=>`
+ <div class="bcard">
+  ${thumb(s[0],spotKw(s[0]),lockOf(s[0]),SPOTGRAD,PIN)}
+  <div class="top"><h3>${s[0]}</h3><span class="en">${s[1]}</span><span class="rtag">${s[3]}</span></div>
+  <p class="desc">${s[4]}</p>
+  <p class="meta"><b>정보</b> ${s[5]}</p>
+  <a class="mapbtn" href="${MAP(s[6])}" target="_blank"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.3-7-11a7 7 0 0114 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>지도 열기</a>
+ </div>`).join('');}
+renderSpots("전체");
+
+const foods=[
+ ["냐벱","Nha Bep","로컬","반쎄오·넴루이(고기꼬치) 세트, 파인애플 볶음밥","세트 약 15만동 · 1인 8~12만동","미케비치 앞 · 에어컨 · 한국어 메뉴","Nha Bep Restaurant My Khe Da Nang","한국인에게 유명한 반쎄오집. 직원이 싸 먹는 법을 알려줘 첫 반쎄오로 후기가 좋고, 에어컨·한국어 메뉴로 가족 단위에 편하다는 평.","냐벱 반쎄오"],
+ ["벱꾸온","Bep Cuon","로컬","반쎄오·분짜·넴, 깔끔한 에어컨 식당","반쎄오 약 6천원 · 1인 6~10만동","미케비치 도보 10분","Bep Cuon Da Nang","깔끔한 에어컨 식당이라 아이·어른 함께 편하다는 후기. 한국어 메뉴 있어 주문 쉬움.","벱꾸온"],
+ ["분짜까 109","Bun Cha Ca 109","로컬","분짜까(다낭식 생선어묵 쌀국수)","1그릇 3~5만동","시내","Bun Cha Ca 109 Da Nang","다낭식 생선어묵 국수 로컬 찐맛집으로 블로그·스레드에 자주 등장. 저렴하고 현지인 많은 진짜 로컬 맛.","분짜까 109"],
+ ["미꽝 바무아","Mi Quang Ba Mua","로컬","미꽝(다낭 대표 비빔국수)","1그릇 3~5만동","시내","Mi Quang Ba Mua Da Nang","다낭 대표 음식 ‘미꽝’ 유명 로컬집. 가성비 좋고 현지인 추천이 많은 곳.","미꽝 바무아"],
+ ["반쎄오 바즈엉","Banh Xeo Ba Duong","로컬","반쎄오·넴루이 세트","1인 5~10만동","골목 안 로컬","Banh Xeo Ba Duong Da Nang","현지 반쎄오 원조급으로 꼽히는 로컬집. 골목 안 로컬 분위기, 넴루이와 세트로 먹는 후기 다수.","반쎄오 바즈엉"],
+ ["반미 (미스란/해피브레드)","Banh Mi","로컬","반미 샌드위치","1.5~2.5만동(약 1천원대)","시내 다수","Banh Mi Da Nang","다낭 반미 유명. 저렴하고 든든해 간식·아침으로 후기 많음. 미스란 반미는 학생들이 줄 서는 곳.","다낭 반미 맛집"],
+ ["마담란","Madame Lan","로컬","쌀국수·분짜·모닝글로리 등 총망라","1인 10~15만동","강변 · 대형 전통가옥","Madame Lan Restaurant Da Nang","메뉴가 방대해 여럿이 쉐어하기 좋다는 후기. 전통가옥 분위기로 관광객에 인기(로컬보다 약간 높은 가격).","마담란"],
+ ["안토이","An Thoi","로컬","파인애플 볶음밥·미꽝·곱창쌀국수·반쎄오","1인 10~15만동","한 시장·핑크성당 앞 (114 Bach Dang) · 10:30~21:30","An Thoi Restaurant Bach Dang Da Nang","한국인 입맛에 잘 맞는다는 평이 많고 곱창쌀국수·파인애플볶음밥이 특히 인기. 인기가 많아 웨이팅을 각오하세요. 한 시장 관광과 묶기 좋아요.","다낭 안토이"],
+ ["하이산 베만","Hai San Be Man","씨푸드","조개·새우·게 구이, 해산물","4인 50~100만동","미케비치 인근","Hai San Be Man Da Nang","한국인에게 인기 해산물집. 양 많고 가성비 좋다는 평이 많음. 주문 전 무게·가격 확인 팁 다수.","베만 해산물"],
+ ["미케 씨푸드(미한)","My Hanh Seafood","씨푸드","크랩·타이거새우·랍스터 (시가)","4인 60~120만동","미케비치 앞 · 에어컨석","My Hanh Seafood Da Nang","미케 해변 앞 씨푸드. 수족관에서 골라 무게로 계산하니 주문 전 총액 확인 후기를 꼭 참고.","미한 씨푸드"],
+ ["목식당","Moc Seafood","씨푸드","칠리크랩·갈릭버터 타이거새우·가리비·굴","칠리크랩 600g 약 2.5만원 · 3~4인 5~6만원","미케비치 도보 8~10분 (26 To Hien Thanh)","Moc Seafood Restaurant Da Nang","한국 예능 소개 후 한국인에게 인기 폭발. 한국어 메뉴판에 직원이 새우 껍질까지 까줘 편하고 가성비가 좋다는 후기가 많아요. 인기라 카카오톡 채널로 한국어 예약 권장.","목식당"],
+ ["랑짜이","Lang Chai","씨푸드","맛조개 모닝글로리 볶음·치즈 가리비 구이","맛조개 약 6천원 · 가리비 약 8천원","미케비치 인근","Lang Chai Seafood Da Nang","정찰제라 바가지 걱정 없이 먹을 수 있다는 게 최대 장점. 가격표대로 계산돼 마음 편하다는 후기.","다낭 랑짜이"],
+ ["피자 포피스","Pizza 4P's","양식","화덕피자·부라타 치즈·파스타","1인 20~35만동","시내","Pizza 4Ps Da Nang","한국 블로그에서 호평. 화덕피자+부라타, 해산물피자가 인기. 산뜻하고 예약 권장, 현지 물가 대비 비싼 편.","피자 포피스"],
+ ["콩카페","Cong Caphe","카페","코코넛 스무디 커피(시그니처)","음료 5.5~7만동","미케비치·시내 다수","Cong Caphe Da Nang My Khe","한국인 인지도 최고 카페. 코코넛커피가 시그니처, 레트로 인테리어로 사진 명소로도 후기 많음.","콩카페"],
+ ["43 팩토리 커피","43 Factory","카페","스페셜티 필터커피","커피 8~12만동","안트엉 지역","43 Factory Coffee Roaster Da Nang","직접 로스팅 스페셜티. 산미 있고 깔끔한 맛에 감성 인테리어. 다만 한국 수준 가격이라 비싼 편이라는 평.","43팩토리 커피"],
+ ["껌가 아하이","Com Ga A Hai","로컬","껌가(찢은 닭 덮밥)·껌가꿰이(닭다리 튀김)","1인 4~7만동","시내","Com Ga A Hai Da Nang","다낭·호이안식 치킨라이스로 유명. 닭다리 튀김 얹은 껌가꿰이가 인기고 저렴·든든하다는 후기.","다낭 껌가"],
+ ["퍼홍","Pho Hong","로컬","소고기 쌀국수 (다낭 3대)","1그릇 4~6만동","시내","Pho Hong Da Nang","다낭 3대 쌀국수로 꼽히는 곳. 맑고 진한 소고기 육수가 특징이라는 후기 다수.","퍼홍 쌀국수"],
+ ["반미 프엉","Banh Mi Phuong","로컬","반미 (호이안 성지)","2~3만동","호이안","Banh Mi Phuong Hoi An","호이안 반미 성지로 유명. 줄 서서 먹는 명물이라 호이안 일정 때 들르기 좋다는 평.","반미 프엉 호이안"],
+ ["미스 리","Miss Ly","로컬","화이트로즈·까올러우·프라이드 완탕","1인 8~15만동","호이안","Miss Ly Restaurant Hoi An","호이안 향토음식 노포. 화이트로즈·까올러우 후기가 많아 호이안 저녁으로 추천.","호이안 미스리"],
+ ["켐버","Kem Bo","디저트","아보카도 아이스크림(껨버)","2~3만동","시내","Kem Bo Da Nang","아보카도+아이스크림 디저트 ‘껨버’로 유명. 저렴하고 이색적이라 아이도 좋아한다는 후기.","다낭 켐버 아보카도 아이스크림"],
+ ["하이랜드 커피","Highlands Coffee","카페","연유커피·프리즈·반미","음료 4~6만동","지점 다수","Highlands Coffee Da Nang","베트남 대표 커피 체인. 지점 많고 배달 잘돼 리조트에서 시켜 먹기 좋다는 평.","하이랜드 커피 다낭"],
+ ["시내 한식당","Korean BBQ","한식","삼겹살·K-BBQ·김치찌개","1인 15~25만동","미케비치·한 시장 인근","Korean restaurant My Khe Da Nang","여행 중 입맛 전환용. 한국인 운영 식당이 많아 아이·어르신 든든하게 먹기 좋다는 후기.","다낭 한식당"],
+];
+const foodCats=["전체","로컬","씨푸드","카페","디저트","양식","한식"];
+document.getElementById('foodfilters').innerHTML=foodCats.map((c,i)=>`<div class="fchip ${i===0?'on':''}" data-f="${c}" data-grp="food">${c}</div>`).join('');
+function renderFoods(f){document.getElementById('foods').innerHTML=foods.filter(x=>f==="전체"||x[2]===f).map(f2=>`
+ <div class="bcard">
+  ${thumb(f2[0],foodKw(f2[0],f2[2]),lockOf(f2[0]),foodGrad[f2[2]]||'linear-gradient(135deg,#8894A6,#5B6B72)',FORK)}
+  <div class="top"><span class="rtag" style="margin-left:0;margin-right:auto;background:#FFF1EF;color:#D53E32">${f2[2]}</span></div>
+  <div class="top" style="margin-top:6px"><h3>${f2[0]}</h3><span class="en">${f2[1]}</span></div>
+  <div class="foodrow"><span class="lb">대표메뉴</span>${f2[3]}</div>
+  <div class="foodrow"><span class="lb">가격</span>${f2[4]} &nbsp;·&nbsp; <span class="lb">위치</span>${f2[5]}</div>
+  <div class="review"><span class="lb">한국인 후기</span>${f2[7]}</div>
+  <div class="btnrow">
+   <a class="mapbtn" href="${MAP(f2[6])}" target="_blank"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.3-7-11a7 7 0 0114 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>지도</a>
+   <a class="mapbtn naver" href="${NAVER(f2[8])}" target="_blank"><svg viewBox="0 0 24 24"><path d="M4 4h4l8 12V4h4v16h-4L8 8v12H4z" fill="currentColor" stroke="none"/></svg>네이버 후기</a>
+  </div>
+ </div>`).join('');}
+renderFoods("전체");
+
+document.querySelectorAll('.fchip').forEach(c=>c.addEventListener('click',()=>{
+  const grp=c.dataset.grp;
+  document.querySelectorAll('.fchip[data-grp="'+grp+'"]').forEach(x=>x.classList.remove('on'));
+  c.classList.add('on');
+  grp==="spot"?renderSpots(c.dataset.f):renderFoods(c.dataset.f);
+}));
+
+const pcards=[
+ ["트래블월렛","<b>주력 카드.</b> 앱에서 VND 충전 → 결제·ATM 출금. <b>그랩 앱에 등록</b>해두면 택시비에 현금이 필요 없어요"],
+ ["토스뱅크 카드","예비용 1장으로 충분. 해외 수수료 조건은 <b>출발 전 앱에서 한 번 확인</b>(정책이 바뀔 수 있어요)"],
+ ["현지 ATM","은행 ATM(비엣콤뱅크 등) 이용. 기기별 수수료 2~5만동 붙을 수 있음. 공항 ATM은 도착일 소액 인출용"],
+ ["DCC 주의","결제·출금 시 ‘원화(KRW)로 할까요?’가 뜨면 <b>반드시 현지통화(VND) 선택</b>. 원화를 고르면 환율에서 손해예요"],
+ ["신용카드","리조트·대형몰·큰 식당 결제용. 로컬 식당·시장은 대부분 현금"],
+];
+document.getElementById('cards').innerHTML=pcards.map(c=>`<div class="row"><div class="k" style="min-width:96px">${c[0]}</div><div class="v">${c[1]}</div></div>`).join('');
+
+const checks=["여권(6개월+ 유효)·비자 확인","항공 e-티켓·호텔 바우처 캡처","달러/동 현금·해외결제 카드","eSIM/유심·보조배터리·멀티어댑터","선크림·모자·선글라스","수영복·래시가드·아쿠아슈즈","상비약(지사제·해열제·모기약·밴드)","우산/우비(오후 스콜)","장모님 상비약·편한 신발","아이 물놀이용품·구명조끼(선택)","얇은 겉옷(냉방·바나힐)","여행자보험 가입"];
+const CK='danang_checklist_v1';
+const chkSvg='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="3" style="display:block;margin:1px auto"><path d="M20 6L9 17l-5-5"/></svg>';
+document.getElementById('checklist').innerHTML=checks.map((c,i)=>`<label class="check" data-i="${i}"><span class="box"></span><span>${c}</span></label>`).join('');
+function paintCheck(el,on){const b=el.querySelector('.box');
+  b.style.background=on?'var(--blue)':'';b.style.borderColor=on?'var(--blue)':'var(--gray2)';
+  b.innerHTML=on?chkSvg:'';el.style.color=on?'var(--gray)':'';}
+let checked=store.get(CK,[]);
+document.querySelectorAll('.check').forEach(el=>{
+  const i=+el.dataset.i;
+  if(checked.includes(i)){el.classList.add('done');paintCheck(el,true);}
+  el.addEventListener('click',()=>{
+    const on=el.classList.toggle('done');paintCheck(el,on);
+    checked=store.get(CK,[]);
+    if(on){if(!checked.includes(i))checked.push(i);}else{checked=checked.filter(x=>x!==i);}
+    store.set(CK,checked);
+  });
+});
+
+const secs={plan:'tab-plan',spot:'tab-spot',food:'tab-food',info:'tab-info'};
+document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  Object.values(secs).forEach(id=>document.getElementById(id).classList.add('hidden'));
+  const el=document.getElementById(secs[btn.dataset.tab]);
+  el.classList.remove('hidden');void el.offsetWidth;
+  if(btn.dataset.tab==='plan'&&_map){setTimeout(()=>_map.invalidateSize(),80);}
+  window.scrollTo({top:0});
+}));
+</script>
+</body>
+</html>
